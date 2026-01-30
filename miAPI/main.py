@@ -43,3 +43,15 @@ async def consultaUno(id:int):
         "resultado": "usuario encontrado",
         "estatus": "200"
         }
+
+
+@app.get("/v1/usuarios_op/", tags=['parameto opcional'])
+async def consulta0p(id:Optional[int]=None):
+    await asyncio.sleep(2)
+    if id is not None:
+        for usuario in usuarios:
+            if usuario["id"] == str(id):
+                return {"usuario encontrado":id, "datos": usuario}
+        return{"mensaje": "usuario no encontrado"}
+    else:
+        return{"aviso": "no se dio ningun id"}
