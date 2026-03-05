@@ -1,8 +1,12 @@
 #1. importataciones
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, status, HTTPException, Depends
 from typing import Optional
 import asyncio 
 from pydantic import BaseModel, Field
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets 
+
+
 #2. inicializacion APP
 app=FastAPI(
     title="Mi primera API",
@@ -18,12 +22,30 @@ usuarios=[
 ]
 
 
+
+
+
 #modelo de validacion 
 
 class crear_usuario(BaseModel):
     id:int = Field(..., gt=0, description="idenrificador de usuario")
     nombre:str = Field(..., min_length=3, max_length=50, example="juan")
     edad:int= Field(...,ge=1, le=123, description="edad del usuario")
+
+
+#seguridad HTTP basis
+
+seguridad = HTTPBasic()
+def verificar_peticion(credenciales: HTTPBasicCredentials = Depends(seguridad)):
+    userAuth = secrets.compare_digest(credenciales.username, "bernardo")
+    passAuth = secrets.compare_digest(credenciales.password, "1234")
+
+    if not (userAuth and passAuth):
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="credenciales incorrectas")
+    
+    return credenciales.username
 
 
 #3. endpoints 
@@ -112,14 +134,13 @@ async def actualiza_usuario(id:int, usuario:dict):
 
 #delete
 @app.delete("/v1/usuarios/{id}", tags=['CRUD HTTP'])
-async def elimina_usuario(id:int):
+async def elimina_usuario(id:int, userAuth: str = Depends(verificar_peticion)):
     for urs in usuarios:
         if urs["id"] == str(id):
             usuarios.remove(urs)
 
             return{
-                "mensaje": "usuario eliminado correctamente",
-                "status": "200"
+                "mensaje": f"usuario eliminado pro {userAuth}",
             }
     raise HTTPException(
         status_code=400,
