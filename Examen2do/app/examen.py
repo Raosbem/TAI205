@@ -9,15 +9,18 @@ import asyncio
 app= FastAPI(title="examen2do parcial")
 
 reservas = []
+confirmaciones =[]
 
 #basemodel
 
 class Reserva (BaseModel):
+    id: int = Field(gt=0)
     nombre_huesped: str = Field(min_length=5)
     fecha_entrada: date = Field(default_factory=date.today)
     fecha_salida: date = Field(default_factory=date.today)
     tipo_habitacion: str = Field(["sencilla", "doble", "suite"])
     estancia: int = Field(gt=7)
+    confirmacion: str
 
 
 
@@ -48,21 +51,18 @@ def crear_reserva(reser: Reserva):
     reservas.append(reser)
     return ("reserva creada con exito")
 
-@app.get("/reservas")
-def listar_reservas():
+@app.get("/reservas", status_code=status.HTTP_200_OK)
+def lista():
     return reservas
 
 
-@app.get("/reservas", status_code=status.HTTP_200_OK)
-async def consultar(id:Optional[int]=None):
-    if id is not None:
-        for i in range(len(reservas)):
-            if reservas[i].id == str(id):
-                return reservas[i]
-        
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="reserva no encontrada")
-    
+@app.get("/reservas/{id}", status_code=status.HTTP_200_OK)
+def consultar_reserva(id: int):
+    for reserva in reservas:
+        if reserva.id == id:
+            return reserva
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail="reserva no encontrada")
 
 @app.delete("/reservas/{nombre_huesped}", status_code=status.HTTP_202_ACCEPTED)
 def eliminar_reserva(nombre_huesped: str, usuario: str = Depends(verificar_peticion)):
@@ -75,4 +75,17 @@ def eliminar_reserva(nombre_huesped: str, usuario: str = Depends(verificar_petic
     detail="reserva no encontrada")
 
 
+@app.put("/reservas/{nombre_huesped}", status_code=status.HTTP_200_OK)
+def actualizar_reserva(nombre_huesped: str, reserva_actualizada: Reserva):
+    for i in range(len(reservas)):
+        if reservas[i].nombre_huesped.lower() == nombre_huesped.lower():
+            reservas[i].confirmacion = reserva_actualizada.confirmacion
+            return ("reserva actualizada con exito")
+    
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail="reserva no encontrada")
+
 #solo validar si llegaron o ne
+#confirmacion
+
+
