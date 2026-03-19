@@ -1,0 +1,42 @@
+fastapi
+uvicorn[standard]
+
+
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: examen_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+FROM python:3.11-slim
+
+# Carpeta de trabajo dentro del contenedor
+WORKDIR /app
+
+# Copiamos requirements
+COPY requirements.txt .
+
+# Instalamos dependencias
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiamos todo el proyecto
+COPY . .
+
+# Exponemos el puerto INTERNO del contenedor
+EXPOSE 8000
+
+# Ejecutamos FastAPI (nota el app.main:app)
+CMD ["uvicorn", "app.examen:app", "--host", "0.0.0.0", "--port", "8000"]
+
+#docker build -t (nombre que le quieresponer) . (desde raiz)
+
+#docker run -p 8003:8000 (nombre del contenedor)
+
+
+docker compose build
+docker compose up -d
